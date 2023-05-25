@@ -30,7 +30,7 @@
 
     //create dropdown default options
     let defaultOption = document.createElement('option');
-    defaultOption.text  = <?= __('Choose a table')?>;
+    defaultOption.text  = '<?= __('Choose a table')?>';
     defaultOption.value = ""; 
     dropdown.add(defaultOption);
     dropdown.selectedIndex = 0;
