@@ -1,5 +1,7 @@
 # CsvImporter plugin for CakePHP
 
+## Not yet supported by composer & unit testing. Still in development
+
 ## Pre-requisites
 1. Model to use with this plugin must be created
 2. Model should follow Cakephp -> table naming convention
