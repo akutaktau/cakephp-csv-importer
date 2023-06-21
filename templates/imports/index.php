@@ -10,13 +10,13 @@
 <?php echo $this->Form->create(null,['type' => 'file','url' => '/csv-importer/imports/upload']);?>
 
     <!--Upload -->
-    <label><?php __('Upload :');?></label>
+    <label><?php echo __('Upload :');?></label>
     <input type="file" name="csv" />
     <!--Upload -->
-    <label><?php __('CSV Delimiter :');?></label>
-    <input type="text" name="delimiter" /><small><?php __('Use t for tab delimiter');?></small>
+    <label><?php echo __('CSV Delimiter :');?></label>
+    <input type="text" name="delimiter" /><small><?php echo  __('Use t for tab delimiter');?></small>
     <!--Get tables -->
-    <label><?php __('Db table :');?></label>
+    <label><?php echo __('Db table :');?></label>
     <select id="tables" name="tables" />
     </select>
     <span id="mapping"></span>
@@ -92,8 +92,6 @@
             tr.appendChild(th);
             thead.appendChild(tr);
             table.appendChild(thead);
-            //theTable.appendChild(table);
-
             
             const uri = '<?php echo $this->Url->build('/csv-importer/imports/fields/'); ?>'+ this.value;
             console.log(uri);
@@ -115,7 +113,7 @@
                 response.json().then(function(data) {  
                     let row;
                     let tbody = document.createElement('tbody');
-                   // let table = document.createElement('table');
+                   
                     for (let i = 0; i < data.length; i++) {
                         
                         row = document.createElement('tr');

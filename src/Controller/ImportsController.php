@@ -3,13 +3,12 @@ declare(strict_types=1);
 
 namespace CsvImporter\Controller;
 
-use Cake\Collection\Collection;
 use CsvImporter\Controller\AppController;
 use Cake\Datasource\ConnectionManager;
 use Cake\View\JsonView;
 use Cake\Http\ServerRequest;
 use Cake\ORM\Locator\LocatorAwareTrait;
-
+use CsvImporter\Controller\Component\ImportCsvComponent;
 
 /**
  * Imports Controller
@@ -18,6 +17,16 @@ use Cake\ORM\Locator\LocatorAwareTrait;
  */
 class ImportsController extends AppController
 {
+    public $schema;
+
+    public function initialize():void {
+
+
+        $this->loadComponent('CsvImporter.ImportCsv');
+
+        parent::initialize();
+    }
+    
     /**
      * Index method
      *
@@ -28,9 +37,14 @@ class ImportsController extends AppController
        
     }
 
+    /**
+     * List all table in the database
+     * 
+     * @return json
+     */
     public function viewClasses(): array
     {
-        return [JsonView::class];
+         return [JsonView::class];
     }
 
     /**
@@ -40,86 +54,44 @@ class ImportsController extends AppController
      */
     public function tables() {
 
-        $db = ConnectionManager::get('default');
-
-        $collection = $db->getSchemaCollection();
-        
-        $tables = $collection->listTables(); 
-
-        //pr($tables)
+        $tables = $this->ImportCsv->getTables();
+       
         $this->set(compact('tables'));
         $this->viewBuilder()->setOption('serialize', 'tables');
     } 
 
     public function fields($table) {
-        $db = ConnectionManager::get('default');
-       // echo $table; exit;
-        $schema   = $db->getSchemaCollection();
-
-        $describe = $schema->describe($table);
-
-        $columns  = $describe->columns(); 
-       
+      
+        $columns = $this->ImportCsv->getFields($table);
 
         $this->set(compact('columns'));
         $this->viewBuilder()->setOption('serialize', 'columns');
     }
 
+    /**
+     * Save csv to the database
+     * 
+     * @return redirect
+     */
     public function upload() {
+      
         $data = $this->getRequest()->getData();
 
-        $delimiter = ($data['delimiter'] == "t") ? "\t" : $data['delimiter'];
+        $delimiter = $data['delimiter'];
 
         $files = $this->getRequest()->getUploadedFiles();
        
-        $fh = fopen($files['csv']->getStream()->getMetaData()['uri'], 'r');
-        
-        $fields = $data['field'];
-
-        $csv_column = array_values($fields);
-        $result = [];
-
-        $skip = true;
-        while (($line = fgetcsv($fh, 0, $delimiter)) !== false) {
-            // do stuff
-            if(!$skip) {
-                $row = [];
-                for($i=0;$i <= count($line);$i++){
-                    if(in_array($i,$csv_column)) {
-                        $key = array_search($i,$fields);
-                        echo gettype($key);
-                        $cols[$key] = $line[$i];
-                        //$row = array_merge($row,$cols);
-                    }
-                   
-                }
-                $row = $cols;
-               
-                if(!empty($row)) 
-                    array_push($result,$row);
-                
-            }
-
-            $skip = false;
+        $save = $this->ImportCsv->saveFile($data['field'],$data['tables'],$files['csv'],$delimiter);
+     
+        if($save) {
+            $this->Flash->success(__('CSV Imported'));
             
         }
-
-        $tables = $this->getTableLocator()->get(ucfirst($data['tables']));
-      
-        $csvArray = $tables->newEntities($result); 
-        
-        try {
-            $tables->saveManyOrFail($csvArray);
-            $this->Flash->success('CSV Imported');
-
-            return $this->redirect('/csv-importer/imports');
+        else {
+            $this->Flash->error(__('CSV Failed to import'));
         }
-        catch (\Cake\ORM\Exception\PersistenceFailedException $e) {
-           pr($e->getMessage());
-        }
-        
-        
-        exit;
+
+        return $this->redirect("/csv-importer/imports");
     }
     
 }
